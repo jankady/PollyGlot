@@ -48,7 +48,7 @@ function App() {
                 const completion = await client.moderations.create({
                     input: formTexts.userText
                 });
-                const flagged = completion.results[0];
+                const {flagged, categories} = completion.results[0];
                 if (flagged) {
                     alert("The text you entered was flagged by the moderation system. Please enter appropriate text.");
                     return;
@@ -123,7 +123,7 @@ function App() {
                 {screen === 1 && <textarea
                     className="w-full h-40 p-4 text-text font-bold bg-area rounded-lg mb-4 resize-none
                          placeholder-text placeholder:font-bold placeholder:opacity-50"
-                    name="message" disabled={true}>{formTexts.transletedText}</textarea>}
+                    name="message" disabled={true} value={formTexts.transletedText}></textarea>}
 
                 <button
                     className="bg-secondary w-full text-white px-8 py-3 rounded-lg hover:bg-primary transition font-semibold cursor-pointer"
