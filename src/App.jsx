@@ -40,6 +40,10 @@ function App() {
             alert("Please select a language to translate to.");
             return;
         }
+        else if (formTexts.userText === "") {
+            alert("Please enter text to translate.");
+            return;
+        }
         if (screen === 0) {
             try {
                 const prompt = `You are a helpful language assistant that translates fluent from any language to ${selectedLanguage}.
@@ -76,11 +80,11 @@ function App() {
             }
             setScreen(1)
         } else {
-            setformTexts(prevState => ({
-                ...prevState,
+            setformTexts({
                 userText: "",
-                transletedText: ""
-            }))
+                transletedText: "",
+            })
+            setSelectedLanguage("")
             setScreen(0)
         }
     }
@@ -126,7 +130,7 @@ function App() {
                     name="message" disabled={true} value={formTexts.transletedText}></textarea>}
 
                 <button
-                    className="bg-secondary w-full text-white px-8 py-3 rounded-lg hover:bg-primary transition font-semibold cursor-pointer"
+                    className="bg-secondary w-full text-white px-8 py-3 rounded-lg hover:bg-primary font-semibold cursor-pointer"
                     onClick={handleSubmit}>
                     {screen === 0 ? "Translate" : "Start Over"}
                 </button>
