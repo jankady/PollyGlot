@@ -14,7 +14,7 @@ const client = new OpenAI({
 function App() {
 
     const [screen, setScreen] = React.useState(0);
-    const [userText, setUserText] = React.useState({
+    const [formTexts, setformTexts] = React.useState({
         userText: "",
         transletedText: ""
     });
@@ -22,7 +22,7 @@ function App() {
 
 
     function onChangeText(event) {
-        setUserText(prev => (
+        setformTexts(prev => (
             {
                 ...prev,
                 userText: event.target.value
@@ -31,31 +31,56 @@ function App() {
     }
 
     function onChangeLanguage(event) {
-        console.log(event.target.value)
         setSelectedLanguage(event.target.value);
     }
 
-
     async function handleSubmit() {
-        console.log(selectedLanguage)
+
+        if (selectedLanguage === "") {
+            alert("Please select a language to translate to.");
+            return;
+        }
         if (screen === 0) {
-            // try {
-            //     const response = await client.chat.completions.create({
-            //         model: "gpt-3.5-turbo",
-            //         messages: [
-            //             {
-            //                 role: "system",
-            //                 content: "You are a helpful language assistant that translates fluent from any language to Spanish."
-            //             },
-            //             {role: "user", content: "Translate the following text to Spanish: 'How are you?'"}
-            //         ],
-            //     })
-            //     console.log(response.choices[0].message.content);
-            // } catch (error) {
-            //     console.error("Error during translation:", error);
-            // }
+            try {
+                const prompt = `You are a helpful language assistant that translates fluent from any language to ${selectedLanguage}.
+                    Write me only the pure translation without any quotemarks.`;
+
+                const completion = await client.moderations.create({
+                    input: formTexts.userText
+                });
+                const flagged = completion.results[0];
+                if (flagged) {
+                    alert("The text you entered was flagged by the moderation system. Please enter appropriate text.");
+                    return;
+                }
+
+                const response = await client.chat.completions.create({
+                    model: "gpt-3.5-turbo",
+                    messages: [
+                        {
+                            role: "system",
+                            content: prompt
+                        },
+                        {role: "user", content: "Translate the following text to "+ selectedLanguage+": '" + formTexts.userText + "'"}
+                    ],
+                    temperature: 0.9,
+                    max_tokens: 2048,
+                })
+                console.log(response.choices[0].message.content);
+                setformTexts(prevState => ({
+                    ...prevState,
+                    transletedText: response.choices[0].message.content
+                }))
+            } catch (error) {
+                console.error("Error during translation:", error);
+            }
             setScreen(1)
         } else {
+            setformTexts(prevState => ({
+                ...prevState,
+                userText: "",
+                transletedText: ""
+            }))
             setScreen(0)
         }
     }
@@ -74,8 +99,7 @@ function App() {
                     className="w-full h-40 p-4 text-text font-bold bg-area rounded-lg mb-4 resize-none
                          placeholder-text placeholder:font-bold placeholder:opacity-50"
                     placeholder="How are you?" name="message" disabled={screen === 1}
-                    defaultValue={screen === 1 ? userText : undefined} value={userText.userText}
-                    onChange={onChangeText}></textarea>
+                    value={formTexts.userText} onChange={onChangeText}></textarea>
 
                 <h1 className="text-primary font-bold mb-4 text-xl">{screen === 0 ? "Select language:" : "Your translation:"}</h1>
 
@@ -99,7 +123,7 @@ function App() {
                 {screen === 1 && <textarea
                     className="w-full h-40 p-4 text-text font-bold bg-area rounded-lg mb-4 resize-none
                          placeholder-text placeholder:font-bold placeholder:opacity-50"
-                    name="message" disabled={true}>Hi</textarea>}
+                    name="message" disabled={true}>{formTexts.transletedText}</textarea>}
 
                 <button
                     className="bg-secondary w-full text-white px-8 py-3 rounded-lg hover:bg-primary transition font-semibold cursor-pointer"
