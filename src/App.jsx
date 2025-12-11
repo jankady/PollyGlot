@@ -5,12 +5,45 @@ import france from './assets/france-flag-icon-256.png';
 import japan from './assets/japan-flag-icon-256.png';
 import spain from './assets/spain-flag-icon-256.png';
 
+
+const client = new OpenAI({
+    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+    dangerouslyAllowBrowser: true
+});
+
 function App() {
 
-    const client = new OpenAI({
-        apiKey: "../.env.OPENAI_API_KEY",
-        dangerouslyAllowBrowser: true
-    });
+    const [screen, setScreen] = React.useState(0);
+    const [userText, setUserText] = React.useState("");
+
+
+    function onChangeText(event) {
+        setUserText(event.target.value);
+    }
+
+
+   async function handleSubmit() {
+        // console.log()
+        if (screen === 0) {
+            try {
+                const response = await client.chat.completions.create({
+                    model: "gpt-3.5-turbo",
+                    messages: [
+                        { role: "system", content: "You are a helpful assistant that translates English to Spanish." },
+                        { role: "user", content: "Translate the following text to Spanish: 'How are you?'" }
+                    ],
+                })
+                console.log(response)
+            }
+            catch (error) {
+                console.error("Error during translation:", error);
+            }
+            setScreen(1)
+        }
+        else {
+            setScreen(0)
+        }
+    }
 
     return (
         <main
@@ -20,16 +53,16 @@ function App() {
             </header>
 
             <section className="border-2 border-black/10 px-4 py-5 rounded-xl shadow-lg">
-                <h1 className="text-primary font-bold mb-4 text-xl">Write text to translate:</h1>
+                <h1 className="text-primary font-bold mb-4 text-xl">{screen === 0 ? "Write text to translate:" : "Original text:"}</h1>
 
                 <textarea
                     className="w-full h-40 p-4 text-text font-bold bg-area rounded-lg mb-4 resize-none
                          placeholder-text placeholder:font-bold placeholder:opacity-50"
-                    placeholder="How are you?" name="message"></textarea>
+                    placeholder="How are you?" name="message" disabled={screen === 1} defaultValue={screen === 1 ? userText : undefined} value={userText} onChange={onChangeText}></textarea>
 
-                <h1 className="text-primary font-bold mb-4 text-xl">Select language:</h1>
+                <h1 className="text-primary font-bold mb-4 text-xl">{screen === 0 ? "Select language:" : "Your translation:"}</h1>
 
-                <div className="flex flex-col gap-4 mb-4 text-text items-start w-fit mx-auto">
+                { screen === 0 && <div className="flex flex-col gap-4 mb-4 text-text items-start w-fit mx-auto">
                     <label className="font-semibold flex items-center gap-2">
                         <input type="radio" name="language" value="Spanish"/>
                         Spanish
@@ -45,11 +78,16 @@ function App() {
                         Japanese
                         <img src={japan} alt="icon of spain" className="w-5 shadow-lg/50 shadow-black"/>
                     </label>
-                </div>
+                </div>}
+                {screen === 1 && <textarea
+                    className="w-full h-40 p-4 text-text font-bold bg-area rounded-lg mb-4 resize-none
+                         placeholder-text placeholder:font-bold placeholder:opacity-50"
+                      name="message" disabled={true}>Hi</textarea>}
 
                 <button
-                    className="bg-secondary w-full text-white px-8 py-3 rounded-lg hover:bg-primary transition font-semibold cursor-pointer">
-                    Translate
+                    className="bg-secondary w-full text-white px-8 py-3 rounded-lg hover:bg-primary transition font-semibold cursor-pointer"
+                onClick={handleSubmit}>
+                    {screen === 0 ? "Translate" : "Start Over"}
                 </button>
             </section>
         </main>
